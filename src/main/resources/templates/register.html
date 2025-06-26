@@ -1,0 +1,102 @@
+<!-- Success message -->
+<div th:if="${smsg}" class="alert alert-success text-center" th:text="${smsg}"></div>
+<!-- Error message -->
+<div th:if="${emsg}" class="alert alert-danger text-center" th:text="${emsg}"></div>
+<form th:action="@{/register}" th:object="${formDto}" method="post">
+    <table class="table table-borderless">
+        <tr>
+            <td><label for="u_name" class="form-label">Name</label></td>
+            <td>
+                <input type="text" th:field="*{u_name}" class="form-control" id="u_name" required />
+            </td>
+        </tr>
+        <tr>
+            <td><label for="email" class="form-label">Email</label></td>
+            <td>
+                <input type="email" th:field="*{email}" class="form-control" id="email" required />
+            </td>
+        </tr>
+        <tr>
+            <td><label for="ph_no" class="form-label">Phone</label></td>
+            <td>
+                <input type="text" th:field="*{ph_no}" class="form-control" id="ph_no" required />
+            </td>
+        </tr>
+        <tr>
+            <td><label for="country" class="form-label">Country</label></td>
+            <td>
+                <select th:field="*{country}" class="form-select" id="country" required>
+                    <option value="" selected></option>
+                    <option th:each="entry : ${country.entrySet()}"
+                            th:value="${entry.key}"
+                            th:text="${entry.value}">
+                    </option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td><label for="state" class="form-label">State</label></td>
+            <td>
+                <select th:field="*{state}" class="form-select" id="state" required style="min-width: 100%;">
+                    <option value="" selected></option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td><label for="city" class="form-label">City</label></td>
+            <td>
+                <select th:field="*{city}" class="form-select" id="city" required style="min-width: 100%;">
+                    <option value="" selected></option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" class="text-center">
+                <button type="submit" class="btn btn-success">Sign Up</button>
+            </td>
+        </tr>
+    </table>
+</form>
+
+<div class="text-center mt-3">
+    <span>Do you have an account? </span>
+    <a th:href="@{/login}">Sign in here</a>
+</div>
+
+<script src="/webjars/jquery/3.7.1/jquery.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $("#country").change(function () {
+            var countryId = $(this).val();
+            if (countryId) {
+                $.ajax({
+                    url: "/state/" + countryId,
+                    type: "GET",
+                    success: function (states) {
+                        $("#state").empty().append('<option value="">-- Select State --</option>');
+                        $.each(states, function (key, value) {
+                            $("#state").append('<option value="' + key + '">' + value + '</option>');
+                        });
+                        $("#city").empty().append('<option value="">-- Select City --</option>');
+                    }
+                });
+            }
+        });
+
+        $("#state").change(function () {
+            var stateId = $(this).val();
+            if (stateId) {
+                $.ajax({
+                    url: "/city/" + stateId,
+                    type: "GET",
+                    success: function (cities) {
+                        $("#city").empty().append('<option value="">-- Select City --</option>');
+                        $.each(cities, function (key, value) {
+                            $("#city").append('<option value="' + key + '">' + value + '</option>');
+                        });
+                    }
+                });
+            }
+        });
+    });
+</script>

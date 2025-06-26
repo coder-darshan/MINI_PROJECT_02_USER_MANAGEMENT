@@ -1,65 +1,153 @@
 package com.darshan.controller;
 
-import com.darshan.dto.LoginFormDTO;
-import com.darshan.dto.RegisterFormDTO;
-import com.darshan.dto.ResetPwdFormDTO;
-import com.darshan.dto.UserDTO;
+import com.darshan.dto.*;
+import com.darshan.service.DashBoardServiceImpl;
 import com.darshan.service.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
-@RequestMapping("/api")
-@RestController
+@Controller
 public class UserController {
 
     @Autowired
     private UserServiceImpl userService;
 
-    @GetMapping("/country")
-    public ResponseEntity<Map<Integer, String>> countryList() {
-        Map<Integer, String> countries = userService.getCountries();
-        return new ResponseEntity<>(countries, HttpStatus.OK);
+    @Autowired
+    private DashBoardServiceImpl dashBoardService;
+
+    @GetMapping("/register")
+    public String loadRegisterPage(Model model) {
+        Map<Integer, String> countriesMap = userService.getCountries();
+        model.addAttribute("country", countriesMap);
+
+        RegisterFormDTO formDTO = new RegisterFormDTO();
+        model.addAttribute("formDto", formDTO);
+        return "register";
     }
 
-    @GetMapping("/state")
-    public ResponseEntity<Map<Integer, String>> stateList(@RequestParam Integer countryId) {
-        return new ResponseEntity<>(userService.getStates(countryId), HttpStatus.OK);
+    @GetMapping("/state/{countryId}")
+    @ResponseBody
+    public Map<Integer, String> getState(@PathVariable Integer countryId, Model model) {
+        Map<Integer, String> states = userService.getStates(countryId);
+        model.addAttribute("state", states);
+
+        return states;
     }
 
-    @GetMapping("/city")
-    public ResponseEntity<Map<Integer, String>> getCites(@RequestParam Integer stateId) {
-
-        return new ResponseEntity<>(userService.getCites(stateId), HttpStatus.OK);
+    @GetMapping("/city/{stateId}")
+    @ResponseBody
+    public Map<Integer, String> getCity(@PathVariable Integer stateId, Model model) {
+        Map<Integer, String> cites = userService.getCites(stateId);
+        model.addAttribute("city", cites);
+        return cites;
     }
 
-    @GetMapping("/emailCheck")
-    public ResponseEntity<Boolean> emailCheck(@RequestBody String email) {
+    @PostMapping("/register")
+    public String handleRegistration(RegisterFormDTO registerFormDTO, Model model) {
+        Boolean status = userService.duplicateEmailCheck(registerFormDTO.getEmail());
 
-        return new ResponseEntity<>(userService.duplicateEmailCheck(email), HttpStatus.OK);
+        if (status == true) {
+            model.addAttribute("emsg", "Duplicate Email Found");
+        } else {
+            Boolean saveUser = userService.saveUser(registerFormDTO);
+            if (saveUser) {
+                //user Saved
+                model.addAttribute("smsg", "Registration Success, Please check your Email...!");
+            } else {
+                //Failed
+                model.addAttribute("emsg", "Registration Failed");
+            }
+        }
+        // Reload countries for the form
+        model.addAttribute("formDto",new RegisterFormDTO());
+        model.addAttribute("country", userService.getCountries());
+        return "register";
     }
 
-    @PostMapping("addUser")
-    public ResponseEntity<Boolean> saveData(@RequestBody RegisterFormDTO registerDTO) {
-
-        return new ResponseEntity<>(userService.saveUser(registerDTO), HttpStatus.CREATED);
+    @GetMapping("/")
+    public String index(Model model) {
+        LoginFormDTO loginForm = new LoginFormDTO();
+        model.addAttribute("loginForm", loginForm);
+        return "login";
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserDTO> loginMethod(@RequestBody LoginFormDTO loginFormDTO) {
+    public String HandleLogin(LoginFormDTO loginFormDTO, Model model) {
+        UserDTO userDTO = userService.login(loginFormDTO);
 
-        return new ResponseEntity<>(userService.login(loginFormDTO), HttpStatus.CREATED);
-
+        if (userDTO == null) {
+            model.addAttribute("emsg", "Invalid Credentials");
+            model.addAttribute("loginForm", new LoginFormDTO());
+        } else {
+            String pwdUpdated = userDTO.getPwd_updated();
+            if ("Yes".equals(pwdUpdated)) {
+                //display dashboard
+                return "redirect:dashboard";
+            } else {
+//                display reset pwd page
+                return "redirect:reset-pwd-page?email="+userDTO.getEmail();
+            }
+        }
+        return "login";
     }
 
-    @PostMapping("/resetPass")
-    public ResponseEntity<Boolean> reset(@RequestBody ResetPwdFormDTO resetPwdFormDTO) {
+    @GetMapping("/dashboard")
+    public String dashboard(Model model) {
 
-        return new ResponseEntity<>(userService.resetPwd(resetPwdFormDTO),HttpStatus.CREATED);
+        QuoteApiResponseDTO quote = dashBoardService.getQuote();
+        model.addAttribute("quote", quote);
+
+        return "dashboard";
+    }
+
+    @GetMapping("/reset-pwd-page")
+    public String loadResetPassPage(@RequestParam("email") String email, Model model)
+    {
+        ResetPwdFormDTO resetPwdFormDTO = new ResetPwdFormDTO();
+        resetPwdFormDTO.setEmail(email);
+        model.addAttribute("resetPwd",resetPwdFormDTO);
+        return "resetPwd";
+    }
+
+//    @PostMapping("resetPwd")
+//    public String handlePwdReset(ResetPwdFormDTO resetPwdFormDTO, Model model)
+//    {
+//        boolean resetPwd = userService.resetPwd(resetPwdFormDTO);
+//        if(resetPwd)
+//        {
+//            return "redirect:dashboard";
+//        }
+//        else {
+//            return "resetPwd";
+//        }
+//    }
+@PostMapping("resetPwd")
+public String handlePwdReset(ResetPwdFormDTO resetPwdFormDTO, Model model) {
+    boolean resetPwd = userService.resetPwd(resetPwdFormDTO);
+    if (resetPwd) {
+        return "redirect:dashboard";
+    } else {
+        // Add the form object back to the model for Thymeleaf binding
+        model.addAttribute("resetPwd", resetPwdFormDTO);
+        // Optionally, add an error message
+        model.addAttribute("emsg", "Password reset failed. Please try again.");
+        return "resetPwd";
     }
 }
+}
+
+
+
+
+
+
+
+
+
+
+
+
