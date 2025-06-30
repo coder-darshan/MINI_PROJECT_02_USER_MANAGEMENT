@@ -125,6 +125,7 @@ public class UserController {
 //            return "resetPwd";
 //        }
 //    }
+    //DARSHAN
 @PostMapping("resetPwd")
 public String handlePwdReset(ResetPwdFormDTO resetPwdFormDTO, Model model) {
     boolean resetPwd = userService.resetPwd(resetPwdFormDTO);
