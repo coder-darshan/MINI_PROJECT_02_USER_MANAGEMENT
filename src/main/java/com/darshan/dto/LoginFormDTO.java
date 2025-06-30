@@ -10,6 +10,4 @@ public class LoginFormDTO {
     private String password;
 
     private String email;
-
-//    DARSHAN
 }
