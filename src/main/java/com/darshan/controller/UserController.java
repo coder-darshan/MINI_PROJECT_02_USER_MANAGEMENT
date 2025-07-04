@@ -3,6 +3,8 @@ package com.darshan.controller;
 import com.darshan.dto.*;
 import com.darshan.service.DashBoardServiceImpl;
 import com.darshan.service.UserServiceImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,6 +15,8 @@ import java.util.Map;
 @Controller
 public class UserController {
 
+   private Logger logger= LoggerFactory.getLogger(UserController.class);
+
     @Autowired
     private UserServiceImpl userService;
 
@@ -21,11 +25,14 @@ public class UserController {
 
     @GetMapping("/register")
     public String loadRegisterPage(Model model) {
+        logger.info("********register() started********");
         Map<Integer, String> countriesMap = userService.getCountries();
         model.addAttribute("country", countriesMap);
 
         RegisterFormDTO formDTO = new RegisterFormDTO();
         model.addAttribute("formDto", formDTO);
+
+        logger.info("********register() completed********");
         return "register";
     }
 
