@@ -44,7 +44,7 @@ public class UserController {
 
         return states;
     }
-
+//conflict
     @GetMapping("/city/{stateId}")
     @ResponseBody
     public Map<Integer, String> getCity(@PathVariable Integer stateId, Model model) {
