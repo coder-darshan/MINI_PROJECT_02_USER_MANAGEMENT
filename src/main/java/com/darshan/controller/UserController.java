@@ -21,6 +21,9 @@ public class UserController {
     private UserServiceImpl userService;
 
     @Autowired
+    private Darshan darshan;
+
+    @Autowired
     private DashBoardServiceImpl dashBoardService;
 
     @GetMapping("/register")
