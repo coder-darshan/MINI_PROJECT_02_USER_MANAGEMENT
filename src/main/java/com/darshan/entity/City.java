@@ -13,7 +13,6 @@ public class City {
     private Integer city_id;
     private String city_name;
 
-    private String malkapur;
 
     @ManyToOne
     @JoinColumn(name = "state_id")
